@@ -28,7 +28,7 @@ class RAID6(object):
             for i in range(file_padding_length - file_real_length):
                 content.append(0)
 
-            for i in range(self.num_data_disk):
+            for i in self.data_disk_list:
                 with open("data_disk_{}".format(int(i)), 'wb') as f:
                     for j in range(stripe):
                         start_index = j * self.stripe_size + i * self.chunk_size
@@ -53,7 +53,7 @@ class RAID6(object):
 
         file_content = [0 for i in range(file_padding_length)]
         stripe = file_real_length // self.stripe_size + 1
-        for i in range(self.num_data_disk):
+        for i in self.data_disk_list:
             with open("data_disk_{}".format(int(i)), 'rb') as f:
                 disk_content = list(f.read())
                 for j in range(stripe):
@@ -70,7 +70,7 @@ class RAID6(object):
         D = np.zeros([self.num_data_disk, data_disk_length], dtype=int)
 
         # D
-        for i in range(self.num_data_disk):
+        for i in self.data_disk_list:
             with open("data_disk_{}".format(int(i)), 'rb') as f:
                 disk_content = list(f.read())
                 D[i,:] = disk_content
@@ -78,10 +78,59 @@ class RAID6(object):
         # C
         C = self.GF.matmul(F, D)
 
-        for i in range(self.num_check_disk):
+        for i in self.check_disk_list:
             with open("check_disk_{}".format(int(i)), "wb") as f:
-                to_write = bytes(C[i,:])
+                to_write = bytes(C[i,:].tolist())
                 f.write(to_write)
+
+        self.data_disk_length = data_disk_length
+
+    def recover(self, data_disk_lost_list=None, check_disk_lost_list=None):
+
+        lost_data_disk_list = [1]
+        lost_check_disk_list = [1]
+        print("removed data disks:", lost_data_disk_list)
+        print("removed check disks:", lost_check_disk_list)
+        recover_data_disk_list = [i for i in self.data_disk_list if i not in lost_data_disk_list]
+        recover_check_disk_list = [i for i in self.check_disk_list if i not in lost_check_disk_list]
+
+        D = np.zeros([len(recover_data_disk_list), self.data_disk_length], dtype=int)
+        index = 0
+        for i in recover_data_disk_list:
+            with open("data_disk_{}".format(int(i)), 'rb') as f:
+                disk_content = list(f.read())
+                D[index,:] = disk_content
+            index += 1
+
+        C = np.zeros([len(recover_check_disk_list), self.data_disk_length], dtype=int)
+        index = 0
+        for i in recover_check_disk_list:
+            with open("check_disk_{}".format(int(i)), 'rb') as f:
+                disk_content = list(f.read())
+                C[index,:] = disk_content
+            index += 1
+
+        E = np.concatenate((D, C), axis=0)
+
+        A = np.concatenate((np.eye(self.num_data_disk, dtype=int), self.GF.F.T), axis=0)
+        to_remove = lost_data_disk_list + [i + self.num_data_disk for i in lost_check_disk_list]
+        A_ = np.delete(A,obj=to_remove, axis=0)
+        A_inverse = self.GF.inverse(A_)
+        D_ = self.GF.matmul(A_inverse, E)
+        C_ = self.GF.matmul(self.GF.F.T, D_)
+
+        for i in lost_data_disk_list:
+            with open("data_disk_{}".format(int(i)), 'wb') as f:
+                to_write = bytes(D_[i,:].tolist())
+                f.write(to_write)
+
+        for i in lost_check_disk_list:
+            with open("check_disk_{}".format(int(i)), 'wb') as f:
+                to_write = bytes(C_[i,:].tolist())
+                f.write(to_write)
+
+        print("recovered")
+
 
     def int_to_byte(self):
         pass

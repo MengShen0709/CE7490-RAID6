@@ -89,6 +89,9 @@ class GaloisField(object):
         c = a ^ b
         return c
 
+    def sub(self, a, b):
+        return self.add(a, b)
+
     def dot(self, a, b):
         """
         c = dot(a,b)
@@ -107,9 +110,39 @@ class GaloisField(object):
         c = np.zeros([a.shape[0], b.shape[1]], dtype=int)
         for i in range(c.shape[0]):
             for j in range(c.shape[1]):
-                c[i][j] = self.dot(a[i,:], b[:,j])
+                c[i][j] = self.dot(a[i, :], b[:, j])
         return c
 
+    def inverse(self, A):
+        """
+        cal the left inverse matrix of A
+        :param A: mat
+        :return: A^-1
+        """
+        if A.shape[0] != A.shape[1]:
+            A_T = np.transpose(A)
+            A_ = self.matmul(A_T, A)
+        else:
+            A_ = A
+        A_ = np.concatenate((A_, np.eye(A_.shape[0], dtype=int)), axis=1)
+        dim = A_.shape[0]
+        for i in range(dim):
+            if not A_[i, i]:
+                for k in range(i + 1, dim):
+                    if A_[k, i]:
+                        break
+                A_[i, :] = list(map(self.add, A_[i, :], A_[k, :]))
+            A_[i, :] = list(map(self.devide, A_[i, :], [A_[i, i]] * len(A_[i, :])))
+            for j in range(i+1, dim):
+                A_[j, :] = self.add(A_[j,:], list(map(self.multiply, A_[i, :], [self.devide(A_[j, i], A_[i, i])] * len(A_[i, :]))))
+        for i in reversed(range(dim)):
+            for j in range(i):
+                A_[j, :] = self.add(A_[j, :], list(map(self.multiply, A_[i, :], [A_[j,i]] * len(A_[i,:]))))
+        A_inverse = A_[:,dim:2*dim]
+        if A.shape[0] != A.shape[1]:
+            A_inverse = self.matmul(A_inverse, A_T)
+
+        return A_inverse
 
 
 
