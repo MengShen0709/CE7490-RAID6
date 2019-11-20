@@ -1,12 +1,23 @@
-from RAID6 import RAID6
+import os 
 import numpy as np
+import string
+from data import DATA_PATH
+from src.config import Config
+from src.RAID6 import RAID6
 
-R = RAID6(
-    num_check_disk=2,
-    num_data_disk=6
-)
+def main(test_obj):
+    # initialize configuration
+    init = Config()
+    dir = init.mkdisk()
 
-R.write_data("src/test.txt")
-R.read_data("src/test.txt")
-R.recover()
-R.read_data("src/test.txt")
+    # setup RAID6 controller
+    controller = RAID6(init)
+
+    # write data objects across storage nodes
+    controller.write_to_disk(os.path.join(DATA_PATH, test_obj), dir)
+
+    # rebuild lost redundancy
+
+if __name__ == "__main__":
+    test_obj = 'test.txt'
+    main(test_obj)
