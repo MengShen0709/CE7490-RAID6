@@ -12,6 +12,8 @@ def main(test_obj):
 
     # setup RAID6 controller
     controller = RAID6(init)
+    original_data = open(os.path.join(DATA_PATH, test_obj), 'r').read()
+    print("original data: "+str(original_data))
 
     # write data objects across storage nodes
     controller.write_to_disk(os.path.join(DATA_PATH, test_obj), dir)

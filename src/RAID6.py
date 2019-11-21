@@ -46,10 +46,12 @@ class RAID6(object):
         print("write data and parity to disk successfully")
     
     def read_from_disk(self, dir):
-        content = []
+        content = ''
         for i in range(self.config.num_data_disk):
-            with open(os.path.join(dir, "disk_{}".format(i)), 'rb') as f:
-                content = list(f.read())
+            with open(os.path.join(dir, "disk_{}".format(i))) as f:
+                content += f.read()
+        
+        print("rebuild data: "+str(content))
        
     def check_failure(self):
         
@@ -69,7 +71,7 @@ class RAID6(object):
         for i in left_data_disk:
             left_data.append(self.read_data(os.path.join(dir,'disk_{}'.format(i))))
         for j in left_check_disk:
-            left_parity.append(self.read_data(os.path.join(dir,'disk_{}'.format(j))))
+            left_parity.append(self.read_data(os.path.join(dir,'disk_{}'.format(j+self.config.num_data_disk))))
 
         A = np.concatenate([np.eye(self.config.num_data_disk, dtype=int), self.gf.vander], axis=0)
         A_= np.delete(A, obj=corrupted_disk_list, axis=0)
