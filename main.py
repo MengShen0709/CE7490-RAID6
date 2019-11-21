@@ -17,6 +17,8 @@ def main(test_obj):
     controller.write_to_disk(os.path.join(DATA_PATH, test_obj), dir)
 
     # rebuild lost redundancy
+    controller.rebuild_data(dir, corrupted_disk_list=[2,3])
+    controller.read_from_disk(dir)
 
 if __name__ == "__main__":
     test_obj = 'test.txt'

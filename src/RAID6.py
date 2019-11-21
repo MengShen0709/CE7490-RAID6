@@ -5,10 +5,10 @@ from src.ffield import GaloisField
 class RAID6(object):
     def __init__(self, config):
         self.config = config
-        self.gf = GaloisField(num_data_disk=self.config.num_data_disk,
-                              num_check_disk=self.config.num_check_disk)
+        self.gf = GaloisField(num_data_disk = self.config.num_data_disk,
+                              num_check_disk= self.config.num_check_disk)
 
-        self.data_disk_list=list(range(self.config.num_data_disk))
+        self.data_disk_list  = list(range(self.config.num_data_disk))
         self.check_disk_list = list(range(self.config.num_check_disk))
     
     def read_data(self, filename, mode = 'rb'):
@@ -20,10 +20,9 @@ class RAID6(object):
         file_size = len(content)
         total_stripe = file_size // self.config.stripe_size + 1
         total_stripe_size = total_stripe * self.config.stripe_size
-        # zero-padding  
-        for i in range(total_stripe_size - file_size):
-            content.append(0)
-        content = np.asarray(content)
+        # zero-padding
+        content = content + [0] * (total_stripe_size - file_size)
+        content = np.asarray(content, dtype=int)
         content = content.reshape(self.config.num_data_disk, \
                                   self.config.chunk_size * total_stripe)
 
@@ -42,14 +41,52 @@ class RAID6(object):
         data_with_parity = np.concatenate([data, parity], axis=0)
         for i in range(self.config.num_disk):
             with open(os.path.join(dir, 'disk_{}'.format(i)), 'wb') as f:
-                f.write(bytes(data_with_parity[i,:]))
+                to_write = bytes(data_with_parity[i,:].tolist())
+                f.write(to_write)
+        print("write data and parity to disk successfully")
+    
+    def read_from_disk(self, dir):
+        content = []
+        for i in range(self.config.num_data_disk):
+            with open(os.path.join(dir, "disk_{}".format(i)), 'rb') as f:
+                content = list(f.read())
        
     def check_failure(self):
         
         pass
 
-    def rebuild_data(self):
-        pass
+    def rebuild_data(self, dir, corrupted_disk_list):
+
+        if len(corrupted_disk_list) > self.config.num_check_disk:
+            print("failed to rebuild data")
+            return -1
+
+        left_data = []
+        left_parity = []
+        left_data_disk = list(set(self.data_disk_list).difference(set(corrupted_disk_list)))
+        left_check_disk= list(set(self.check_disk_list).difference(set(corrupted_disk_list)))
+
+        for i in left_data_disk:
+            left_data.append(self.read_data(os.path.join(dir,'disk_{}'.format(i))))
+        for j in left_check_disk:
+            left_parity.append(self.read_data(os.path.join(dir,'disk_{}'.format(j))))
+
+        A = np.concatenate([np.eye(self.config.num_data_disk, dtype=int), self.gf.vander], axis=0)
+        A_= np.delete(A, obj=corrupted_disk_list, axis=0)
+
+        E_= np.concatenate([np.asarray(left_data), np.asarray(left_parity)], axis=0)
+
+        D = self.gf.matmul(self.gf.inverse(A_), E_)
+        C = self.gf.matmul(self.gf.vander, D)
+
+        E = np.concatenate([D, C], axis=0)
+
+        for i in corrupted_disk_list:
+            with open(os.path.join(dir,'disk_{}'.format(i)), 'wb') as f:
+                to_write = bytes(E[i,:].tolist())
+                f.write(to_write)
+        
+        print("rebuild data successfully")
 
 
     # def write_data(self, filename, data):

@@ -23,7 +23,7 @@ class Config(object):
         
     
     def mkdisk(self):
-        test_dir = os.path.join(DATA_PATH, time.strftime('%Y-%m-%d %H-%M-%S'))
+        test_dir = os.path.join(DATA_PATH, time.strftime('%Y-%m-%d-%H-%M-%S'))
         os.mkdir(test_dir)
         return test_dir
         
