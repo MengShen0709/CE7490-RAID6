@@ -2,8 +2,14 @@ import numpy as np
 
 class GaloisField(object):
     '''Galois Field module
+    A class that defines foundamental 
+    mathematics in RAID6 
     '''
     def __init__(self, num_data_disk, num_check_disk, w = 8, modulus = 0b100011101):
+        '''inital setting
+        field: GF(2^w), w=8
+        primitive polynomial: x^8+x^4+x^3+x^2+1
+        '''
         self.num_data_disk = num_data_disk
         self.num_check_disk = num_check_disk
         self.w = w
@@ -16,7 +22,7 @@ class GaloisField(object):
         self.setup_vander()
     
     def setup_tables(self):
-        '''Generate the look up logarithm table
+        '''Set up the look up logarithm table
         '''
         b = 1
         for log in range(self.x_to_w - 1):
@@ -27,7 +33,7 @@ class GaloisField(object):
                 b = b ^ self.modulus
     
     def setup_vander(self):
-        '''Generate the Vandermond matrix
+        '''Set up the Vandermond matrix
         '''
         for i in range(self.num_check_disk):
             for j in range(self.num_data_disk):
@@ -107,7 +113,7 @@ class GaloisField(object):
     def inverse(self, A):
         """
         cal the left inverse matrix of A
-        :param A: mat
+        :param A: matrix
         :return: A^-1
         """
         if A.shape[0] != A.shape[1]:

@@ -3,7 +3,12 @@ import os
 from data import DATA_PATH
 
 class Config(object):
-
+    '''
+    setup configuration of RAID6 controller
+    :param num_disk: total disk count
+    :param num_data_disk:  disk for data storage
+    :param num_check_disk: disk for parity storage
+    '''
     def __init__(self):
         self.num_disk = 8
         self.num_data_disk = 6
@@ -23,6 +28,10 @@ class Config(object):
         
     
     def mkdisk(self):
+        '''
+        Make test directory for disk
+        :return: dir
+        '''
         test_dir = os.path.join(DATA_PATH, time.strftime('%Y-%m-%d-%H-%M-%S'))
         os.mkdir(test_dir)
         return test_dir
