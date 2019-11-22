@@ -7,6 +7,9 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -83,7 +86,7 @@ The rest of the report is organized as follows: ...
 The RAID-6 theory is based on the Galois Field mathematics and the Reed-Solomon codes. This section will provide relevant definations and principles in the implementation of a RAID-6 distributed storage system. First, let $D_1, D_2, ... , D_n$ denote $n$ \emph{storage disks} and $C_1, C_2, ... , C_m$ denote $m$ \emph{checksum disks}. Each of this disk holds the same storage capacity. The objective is to define the calculation of $C_i$ such that if any $m$ of $D_1, D_2, ... , D_n, C_1, C_2, ... , C_m$ corrupt. The contents of the corrupted devices can be rebuilt from the non-corrupted devices.
 
 \subsection{Arithmetic over Galois Field}
-Fields with $2^w$ elements under closed operations like addition and multiplication are called \emph{Galois Fields} (denoted as $\textbf{GF(2^w)}$). The elements are integers from zero to $2^w-1$. For example, the field $\textbf{GF(2)}$ can be represent as the set ${0,1}$. A small field would limit the number of disks possible while a large field would require extremely large tables. For RAID-6, we choose the commonly used field of $\textbf{GF(2^8)}$, which allows for a maximum of 255 data disks. The operations in this finite field are illustrated as below:
+Fields with $2^w$ elements under closed operations like addition and multiplication are called \emph{Galois Fields} (denoted as \textbf{GF($2^w$)}). The elements are integers from zero to $2^w-1$. For example, the field \textbf{GF(2)} can be represent as the set ${0,1}$. A small field would limit the number of disks possible while a large field would require extremely large tables. For RAID-6, we choose the commonly used field of \textbf{GF($2^8$)}, which allows for a maximum of 255 data disks. The operations in this finite field are illustrated as below:
 
 \emph{Addition}: The addition field operator $(\oplus)$ is  performed by bitwise XOR. 
 
@@ -103,8 +106,40 @@ Based on the definitions of the foundamental operations, the following basic rul
 	\item  Distributive law: $(A \oplus B) \otimes C = A \otimes C  \oplus B \otimes C$
 \end{itemize}
 
-Here, we further explain how to perform multiplication and division in $\textbf{GF(2^8)}$
+Here, we further explain how to perform multiplication and division in \textbf{GF($2^8$)}. The multiplication and division in this field is much more difficult and harder to implement. Multiplying two field elements is to multiply their corresponding polynominals. To simplify this calculation, we use two look up logarithm tables with length of each equals $2^w-1$. These tables are defined as \emph{gflog} and \emph{gfilog} and can be generated using Algorithm 1.
 
+\begin{itemize}
+	\item \emph{gflog[]}: This table is defined for the indices 1 to 255, which maps the index to its logarithm in the Galois Field.
+	\item \emph{gfilog[]}: This table is defined for the indices 0 to 254, which maps the index to its inverse logarithm in the Galois Field. 
+\end{itemize}
+
+Obviously, \emph{gflog[gfilog[i]] = i}, and \emph{gfilog[gflog[i]] =i}. With these two tables, we can easily multiply two non-zero elements of \textbf{GF($2^8$)} by adding their logs and then taking the inverse log as given by:
+
+\begin{equation}
+	A \otimes B = gfilog[gflog[A] + gflog[B]]
+\end{equation}
+
+\begin{equation}
+	A \otimes B^{-1} = gfilog[gflog[A] - gflog[B]]
+\end{equation}
+
+When $w$ is small, these two tables can accelerate multiplication and division in the Galois Field.
+
+\begin{algorithm}
+	\KwIn{$w=8$, $modulus=0b100011101$}
+	\KwOut{two logarithm tables}
+	max = $1<<8$ \\
+	$b = 1$ \\
+	\emph{gflog}, \emph{gfilog} = malloc(max)\\
+	\For{$log = 0$ \KwTo max}
+	{
+		\emph{gflog}[$b$] = $log$\\
+		\emph{gfillog}[$log$] = $b$\\
+		$b$ = $b<<1$\\
+			\If{$b$ \& max}{$b$ = $b$ \textsuperscript{$ \wedge $} $modulus$}
+	}
+	\caption{Setup logarithm tables}
+\end{algorithm}
 
 \subsection{Reed-Solomen Coding}
 
