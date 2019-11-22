@@ -83,7 +83,7 @@ The rest of the report is organized as follows: ...
 The RAID-6 theory is based on the Galois Field mathematics and the Reed-Solomon codes. This section will provide relevant definations and principles in the implementation of a RAID-6 distributed storage system. First, let $D_1, D_2, ... , D_n$ denote $n$ \emph{storage disks} and $C_1, C_2, ... , C_m$ denote $m$ \emph{checksum disks}. Each of this disk holds the same storage capacity. The objective is to define the calculation of $C_i$ such that if any $m$ of $D_1, D_2, ... , D_n, C_1, C_2, ... , C_m$ corrupt. The contents of the corrupted devices can be rebuilt from the non-corrupted devices.
 
 \subsection{Arithmetic over Galois Field}
-Fields with $2^w$ elements under closed operations like addition and multiplication are called \emph{Galois Fields} (denoted as $\textbf{GF(2^w)}$). The elements are integers from zero to $2^w-1$. For example, the field $\textbf{GF(2)}$ can be represent as the set ${0,1}$. A small field would limit the number of disks possible while a large field would require extremely large tables. For RAID-6, we choose the commonly used field of $\textbf{GF(2^8)}$, which allows for a maximum of 255 data disks. The operations in this finite field are illustrated as below:
+Fields with $2^w$ elements under closed operations like addition and multiplication are called \emph{Galois Fields} (denoted as $\textbf{GF(2\^w)}$). The elements are integers from zero to $2^w-1$. For example, the field $\textbf{GF(2)}$ can be represent as the set ${0,1}$. A small field would limit the number of disks possible while a large field would require extremely large tables. For RAID-6, we choose the commonly used field of $\textbf{GF(2\^8)}$, which allows for a maximum of 255 data disks. The operations in this finite field are illustrated as below:
 
 \emph{Addition}: The addition field operator $(\oplus)$ is  performed by bitwise XOR. 
 
@@ -103,10 +103,59 @@ Based on the definitions of the foundamental operations, the following basic rul
 	\item  Distributive law: $(A \oplus B) \otimes C = A \otimes C  \oplus B \otimes C$
 \end{itemize}
 
-Here, we further explain how to perform multiplication and division in $\textbf{GF(2^8)}$
+Here, we further explain how to perform multiplication and division in $\textbf{GF(2\^8)}$
 
 
 \subsection{Reed-Solomen Coding}
+
+By using Reed-Solomen Coding, we could use more parities to back up our data, not just 2. It could be very helpful when one wants to achieve better data security.
+
+\subsubsection{Calculating Parities}
+
+Suppose we have $N$ data disks and $M$ parity disks. To calculate the parity $P_i$, we define function $F_i$: 
+
+$$
+P_i = F_i(d_1,d_2,...,d_n) = \sum_{j=1}^{n}d_j f_{i,j}
+$$
+
+If we treat data and parity as vectors, where $D = [d_1, d_2, ... , d_i]$ and $P = [p_1, p_2, ... ,p_i]$, we could get a simpler equation:
+
+$$P=FD$$
+
+
+To calculate P, first, we need to generate the $M \times N$ Vandermonde matrix F where $f_{i,j} = j ^ {i-1}$
+
+$$
+F =
+\left[
+\begin{matrix}
+ 1      & 1      & \cdots & 1      \\
+ 1      & 2      & \cdots & N      \\
+ \vdots & \vdots & \ddots & \vdots \\
+ 1      & 2^{M-1}      & \cdots & N^{M-1}      \\
+\end{matrix}
+\right]
+$$
+
+In this way, we could easily get our parities $P$ by applying a matrix multiplication on Galois Field.
+
+\subsubsection{Recovering Data}
+
+To recover our data from disk faliure, we need to define matrix $A = \left[\begin{matrix}I \\F \\\end{matrix}\right]$ and $E= \left[\begin{matrix}D \\P \\\end{matrix}\right]$, where $I$ is a $N \times N$ identity matrix and matrix $F, D, P$ are defined before. So we get the equation:
+
+$$AD=E$$
+
+When a disk or disks encount failure, we could delete the corresponding row in $A$ and $E$. For instance, we have one failed data disk $D_i$ and one failed parity disk $P_j$, then we need to delete $i_{th}$ row in $I$ and $j_{th}$ row in $F$ to get a new $A'$. Likewise, we also need to delete $i_{th}$ row in $D$ and $j_{th}$ rwow in $P$ to get a new $E'$. Then the equation becomes: 
+
+$$A'D=E'$$
+
+What we want is actually D, so the problem becomes to solve the following equation:
+
+$$D=A'^{-1}E'$$
+
+The way we use to calculate the inverse matrix $A'^{-1}$ is Gaussian Elimination, the only difference is we do it in Galois Field. Once we calculate our data D, then by using the method mentioned before: $P=FD$, we could update our parity P if it's necessary. 
+
+
 
 \section{ Implementation}
 
