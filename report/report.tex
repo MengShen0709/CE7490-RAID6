@@ -24,7 +24,7 @@ e-mail: (meng005@e.ntu.edu.sg, ruihang001@e.ntu.edu.sg).}% <-this % stops a spac
 \thanks{Yihang Li is with the School
 of Electrical and Electronic Engineering, Nanyang Technological University, Singapore,
 e-mail: (leah9704@gmail.com).}% <-this % stops a space
-\thanks{Project submitted Nov 23, 2019.}}
+\thanks{Project submitted on Nov 23, 2019.}}
 
 % The paper headers
 \markboth{CE7490 2019 Fall - Advanced Topics in Distributed System - Project 2}%
@@ -33,9 +33,8 @@ e-mail: (leah9704@gmail.com).}% <-this % stops a space
 % make the title area
 \maketitle
 
-
 \begin{abstract}
-RAID-6 is an extension of RAID-5 by adding another parity block. It is designed to tolerate any two concurrent disk failure and maintain a relatively high storage efficiency. The mathematics behind RAID-6 is Galois Field (GF) theory and Reed-Solomon codes. In this project, we develop a RAID-6 based distributed storage system and create a finite field operation library under Python 3.7 envrionment. In addition to basic functionalities, we also implement ...
+RAID-6 is an extension of RAID-5 by adding another parity block. It is designed to tolerate any two concurrent disk failure and maintain a relatively high storage efficiency. The mathematics behind RAID-6 is Galois Field theory and Reed-Solomon Coding. In this project, we create our own finite field operation library and use it to develop a RAID-6 based distributed storage system in Python 3.7 under Linux envrionment. In addition to basic functionalities, we also developed several advanced features in the system that can accommodate real files of arbitrary size and support user defined configurations. To make it available for implementation, we open-source our codes with read-me documents at \url{https://github.com/GuluDeemo/CE7490-RAID6}
 \end{abstract}
 
 % Note that keywords are not normally used for peerreview papers.
@@ -57,7 +56,15 @@ In this report, we present a reliable distributed storage system based on RAID-6
 The rest of the report is organized as follows: ...
 
 \section{Overview}
-
+The RAID-6 distributed storage system is developed in Python 3.7 under Linux environment. Instead of using existing finite field libraries, we create our own Galois Field \textbf{GF($2^8$)} operations based on the tutorial document of Reed-Solomon Coding in \cite{bibid}. The only dependency we use in this project is \emph{NumPy} for basic matrix operations. The functionalities we have developed for this RAID-6 system are summarized as follows:
+\begin{itemize}
+	\item Store and access abstract “data objects” across storage nodes using RAID-6 for fault-tolerance.
+	\item Include mechanisms to determine failure of storage nodes.
+	\item Carry out rebuild of lost redundancy at a replacement storage node.
+	\item Accommodate real files of arbitrary size, taking into account issues like RAID mapping, etc. 
+	\item Support mutable files, taking into account update of the content, and consistency issues.
+	\item Support larger set of configurations
+\end{itemize}
 
 \section{Problem Specification}
 The RAID-6 theory is based on the Galois Field mathematics and the Reed-Solomon codes. This section will provide relevant definations and principles in the implementation of a RAID-6 distributed storage system. First, let $D_1, D_2, ... , D_n$ denote $n$ \emph{storage disks} and $C_1, C_2, ... , C_m$ denote $m$ \emph{checksum disks}. Each of this disk holds the same storage capacity. The objective is to define the calculation of $C_i$ such that if any $m$ of $D_1, D_2, ... , D_n, C_1, C_2, ... , C_m$ corrupt. The contents of the corrupted devices can be rebuilt from the non-corrupted devices.
@@ -175,6 +182,18 @@ D=A'^{-1}E'
 The way we use to calculate the inverse matrix $A'^{-1}$ is Gaussian Elimination, the only difference is we do it in Galois Field. Once we calculate our data D, then by using the method mentioned before: $P=FD$, we could update our parity P if it's necessary. 
 
 \section{ Implementation}
+
+\subsection{System Configuration}
+The configuration of the RAID-6 based distributed storage system is shown below
+\begin{itemize}
+	\item Number of Disk: $N$ = 6
+	\item Number of Data Disk: $D$ = 4
+	\item Number of Checksum Disk: $C$ = 2
+	\item $D_1$ ~ $D_4$ denote 4 data disks
+	\item $C_1$ ~ $C_4$ denote 2 data disks 
+\end{itemize}
+
+
 
 \section{Conclusion}
 The conclusion goes here.
