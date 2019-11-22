@@ -52,10 +52,10 @@ RAID-6 is a private raid-level standard proposed concurrently by several large e
 
 RAID-6 achieves faster reading performance and higher fault tolerance. All these advantages make larger RAID groups more practical, especially for high-availability systems, as larger-capacity drives take longer to restore. The larger the drive capacities and the larger the array size, the more important it becomes to choose RAID-6 instead of RAID-5. However, RAID-6 is not as popular as other levels of RAID for practical application because of its complicated system and expensive RAID controller. For most small businesses which do not require high security level of data preservation, it is better to use RAID-5 economically. While for businesses demand higher security level of data preservation like data center, it is necessary to implement RAID-6.
 
-In this report, we present a reliable distributed storage system based on RAID-6 under Python 3.7 environment. The mathematical operation in Galois Field is well investigated and created as a library to support RAID-6 controller through practical implementation. The RAID-6 based system support several basic functionalities, such as distributed data storage, failure detection and lost redundancy recovery. On top of the minimal implementation, we also investigate ...
-The rest of the report is organized as follows: ...
+In this report, we present a reliable distributed storage system based on RAID-6 under Python 3.7 environment. The mathematical operation in Galois Field is well investigated and created as a library to support RAID-6 controller through practical implementation. The RAID-6 based system support several basic functionalities, such as distributed data storage, failure detection and lost redundancy recovery. On top of the minimal implementation, we also developed several advanced features that can accommodate real files of arbitrary size and support various userdefined configurations for practical applications. The rest of the report is organized as follows: Section \ref{sec2} presents the overview of our project. Section \ref{sec3} investigates the mathematics and principle of RAID-6 system. Section \ref{sec4} introduces the implementation details of our designed system. The implementation of this project is concluded in Section \ref{sec5}.
 
 \section{Overview}
+\label{sec2}
 The RAID-6 distributed storage system is developed in Python 3.7 under Linux environment. Instead of using existing finite field libraries, we create our own Galois Field \textbf{GF($2^8$)} operations based on the tutorial document of Reed-Solomon Coding in \cite{bibid}. The only dependency we use in this project is \emph{NumPy} for basic matrix operations. The functionalities we have developed for this RAID-6 system are summarized as follows:
 \begin{itemize}
 	\item Store and access abstract “data objects” across storage nodes using RAID-6 for fault-tolerance.
@@ -67,6 +67,7 @@ The RAID-6 distributed storage system is developed in Python 3.7 under Linux env
 \end{itemize}
 
 \section{Problem Specification}
+\label{sec3}
 The RAID-6 theory is based on the Galois Field mathematics and the Reed-Solomon codes. This section will provide relevant definations and principles in the implementation of a RAID-6 distributed storage system. First, let $D_1, D_2, ... , D_n$ denote $n$ \emph{storage disks} and $C_1, C_2, ... , C_m$ denote $m$ \emph{checksum disks}. Each of this disk holds the same storage capacity. The objective is to define the calculation of $C_i$ such that if any $m$ of $D_1, D_2, ... , D_n, C_1, C_2, ... , C_m$ corrupt. The contents of the corrupted devices can be rebuilt from the non-corrupted devices.
 
 \subsection{Arithmetic over Galois Field}
@@ -90,7 +91,24 @@ Based on the definitions of the foundamental operations, the following basic rul
 	\item  Distributive law: $(A \oplus B) \otimes C = A \otimes C  \oplus B \otimes C$
 \end{itemize}
 
-Here, we further explain how to perform multiplication and division in \textbf{GF($2^8$)}. The multiplication and division in this field is much more difficult and harder to implement. Multiplying two field elements is to multiply their corresponding polynominals. To simplify this calculation, we use two look up logarithm tables with length of each equals $2^w-1$. These tables are defined as \emph{gflog} and \emph{gfilog} and can be generated using Algorithm 1.
+Here, we further explain how to perform multiplication and division in \textbf{GF($2^8$)}. The multiplication and division in this field is much more difficult and harder to implement. Multiplying two field elements is to multiply their corresponding polynominals. To simplify this calculation, we use two look up logarithm tables with length of each equals $2^w-1$. These tables are defined as \emph{gflog} and \emph{gfilog} and can be generated using Algorithm \ref{alg1}.
+
+\begin{algorithm}
+	\label{alg1}
+	\KwIn{$w=8$, $modulus=0b100011101$}
+	\KwOut{two logarithm tables}
+	max = $1<<w$ \\
+	$b = 1$ \\
+	\emph{gflog}, \emph{gfilog} = malloc(max)\\
+	\For{$log = 0$ \KwTo max}
+	{
+		\emph{gflog}[$b$] = $log$\\
+		\emph{gfillog}[$log$] = $b$\\
+		$b$ = $b<<1$\\
+		\If{$b$ \& max}{$b$ = $b$ \textsuperscript{$ \wedge $} $modulus$}
+	}
+	\caption{Setup logarithm tables}
+\end{algorithm}
 
 \begin{itemize}
 	\item \emph{gflog[]}: This table is defined for the indices 1 to 255, which maps the index to its logarithm in the Galois Field.
@@ -108,22 +126,6 @@ A \otimes B^{-1} = gfilog[gflog[A] - gflog[B]]
 \end{equation}
 
 When $w$ is small, these two tables can accelerate multiplication and division in the Galois Field.
-
-\begin{algorithm}
-	\KwIn{$w=8$, $modulus=0b100011101$}
-	\KwOut{two logarithm tables}
-	max = $1<<8$ \\
-	$b = 1$ \\
-	\emph{gflog}, \emph{gfilog} = malloc(max)\\
-	\For{$log = 0$ \KwTo max}
-	{
-		\emph{gflog}[$b$] = $log$\\
-		\emph{gfillog}[$log$] = $b$\\
-		$b$ = $b<<1$\\
-		\If{$b$ \& max}{$b$ = $b$ \textsuperscript{$ \wedge $} $modulus$}
-	}
-	\caption{Setup logarithm tables}
-\end{algorithm}
 
 \subsection{Reed-Solomen Coding}
 
@@ -182,6 +184,7 @@ D=A'^{-1}E'
 The way we use to calculate the inverse matrix $A'^{-1}$ is Gaussian Elimination, the only difference is we do it in Galois Field. Once we calculate our data D, then by using the method mentioned before: $P=FD$, we could update our parity P if it's necessary. 
 
 \section{ Implementation}
+\label{sec4}
 
 \subsection{System Configuration}
 The configuration of the RAID-6 based distributed storage system is shown below
@@ -196,6 +199,7 @@ The configuration of the RAID-6 based distributed storage system is shown below
 
 
 \section{Conclusion}
+\label{sec5}
 The conclusion goes here.
 
 
@@ -205,22 +209,9 @@ The conclusion goes here.
 Appendix one text goes here.
 
 
-\section{}
-Appendix two text goes here.
-
-
 % use section* for acknowledgment
 \section*{Acknowledgment}
-
-
-The authors would like to thank...
-
-% Can use something like this to put references on a page
-% by themselves when using endfloat and the captionsoff option.
-\ifCLASSOPTIONcaptionsoff
-  \newpage
-\fi
-
+We would like to thank Prof. Anwitaman Datta for teaching the course CE7490 Advanced Topics in Distributed Systems and the abundant resources provided in his lecture.
 
 \begin{thebibliography}{1}
 
