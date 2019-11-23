@@ -10,7 +10,8 @@
 \usepackage{xcolor}
 \usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{hyperref}
-\usepackage{graphicx}
+\usepackage{graphicx}
+\usepackage{float}
 \usepackage{caption}
 
 \begin{document}
@@ -68,13 +69,19 @@ The RAID-6 distributed storage system is developed in Python 3.7 under Linux env
 	\item Support larger set of configurations
 \end{itemize}
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/RAID-6.jpg}
-	\caption{RAID-6 distributed storage system}
+\begin{figure}[htbp]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.5\textwidth]{fig/RAID-6.jpg}
+
+	\caption{RAID-6 distributed storage system}
+
 	\label{fig1}
-\end{figure}
+\end{figure}
+
 
 \section{Problem Specification}
 \label{sec3}
@@ -241,54 +248,93 @@ In addition to basic functionalities, we also developed several advanced feature
 
 \subsubsection{Support User Defined Configurations } In the test phase, the RAID-6 system is specifically configured with 6 data disks and 2 checksum disks as the conventional example.  To make it more flexible, we separately take the configuration file as a Python class to let users define their preferred choice for practical implementation. The experiments of different configurations with different performance is discussed in Section \ref{sec5} . 
 
-\section{Experiments}
+\section{Experiments}
+
 \label{sec5}
 
-In this experiment, we change the chunk size to \textbf{4 Bytes}, \textbf{8 Bytes}, ..., and \textbf{256 Bytes}. The test file we use is a jpg with size of 805 KB. We measure the reading, writing and recovering time in the configuration of 4 data disks and 2 parity disks. Following figures are the experiment result:
+In this experiment, we change the chunk size to \textbf{4 Bytes}, \textbf{8 Bytes}, ..., and \textbf{256 Bytes}. The test file we use is a jpg with size of 805 KB. We measure the reading, writing and recovering time in the configuration of 4 data disks and 2 parity disks. Following figures are the experiment result:
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_read.png}
-	\caption{Read time on different chunk size}
-\end{figure}
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_write.png}
-	\caption{Write time on different chunk size}
-\end{figure}
+\begin{figure}[htbp]
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_recover.png}
-	\caption{Recover time on different chunk size}
-\end{figure}
+	\centering
 
-In second experiment, we use the txt file with size of 512 Bytes, and measure the reading, writing and recovering time.
+	\captionsetup{justification=centering}
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_read_small.png}
-	\caption{Read time on different chunk size}
-\end{figure}
+	\includegraphics[width=0.4\textwidth]{fig/result_read.png}
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_write_small.png}
-	\caption{Write time on different chunk size}
-\end{figure}
+	\caption{Read time on different chunk size, file size is 802 KB}
 
-\begin{figure}[htbp]
-	\centering
-	\captionsetup{justification=centering}
-	\includegraphics[width=0.5\textwidth]{fig/result_recover_small.png}
-	\caption{Recover time on different chunk size}
-\end{figure}
+\end{figure}
+
+
+\begin{figure}[htbp]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.4\textwidth]{fig/result_write.png}
+
+	\caption{Write time on different chunk size, file size is 802 KB}
+
+\end{figure}
+
+
+\begin{figure}[]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.4\textwidth]{fig/result_recover.png}
+
+	\caption{Recover time on different chunk size, file size is 802 KB}
+
+\end{figure}
+
+
+In second experiment, we use the txt file with size of 512 Bytes, and measure the reading, writing and recovering time.
+
+
+\begin{figure}[H]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.4\textwidth]{fig/result_read_small.png}
+
+	\caption{Read time on different chunk size, file size is 512 Bytes}
+
+\end{figure}
+
+
+\begin{figure}[H]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.4\textwidth]{fig/result_write_small.png}
+
+	\caption{Write time on different chunk size, file size is 512 Bytes}
+
+\end{figure}
+
+
+\begin{figure}[H]
+
+	\centering
+
+	\captionsetup{justification=centering}
+
+	\includegraphics[width=0.4\textwidth]{fig/result_recover_small.png}
+
+	\caption{Recover time on different chunk size, file size is 512 Bytes}
+
+\end{figure}
+
 
 From the results, we can see that with the chunk size becomes larger, the reading, writing and recovering time all decrease. This is because data is divided into larger pieces, which reduces the times of reading or writing the file(IO). However, in second experiment, when the chunk size is too large compared with the file size, the performance might be worse. So the chunk size should depend on how large you files mainly are. If you store many tiny files, smaller chunk size could save space because of less padding. On the contrary, larger chunk size should be choosed if there are many large files because of less IO time.
 
