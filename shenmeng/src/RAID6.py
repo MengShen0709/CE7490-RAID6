@@ -16,6 +16,11 @@ class RAID6(object):
                 os.remove("disk_{}".format(i))
 
     def write_data(self, filename):
+        """
+        segment data and write it to disks
+        :param filename: name of file
+        :return: None
+        """
         f = open(filename, 'rb')
         file_real_length = 0
         file_padding_length = 0
@@ -31,6 +36,7 @@ class RAID6(object):
                 content += [0] * (self.stripe_size - content_length)
 
             file_padding_length += self.stripe_size
+            # write a stripe of data into disks
             self.write_to_disk(content, stripe_num)
             stripe_num += 1
 
@@ -43,9 +49,18 @@ class RAID6(object):
         }
 
     def write_to_disk(self, content, stripe_num):
+        """
+        write data into disks
+        decide the order of data pieces
+        :param content: data
+        :param stripe_num: index of stripe
+        :return:
+        """
         content = np.asarray(content)
         content = np.reshape(content, (self.num_data_disk, self.chunk_size))
+        # compute the parity data chunk
         parity = self.GF.matmul(self.GF.F, content)
+        # generate a completed stripe of data
         data_with_parity = np.concatenate([content, parity], axis=0)
         for i in range(self.num_disk):
             index = (i + stripe_num) % self.num_disk
@@ -55,27 +70,35 @@ class RAID6(object):
 
 
     def read_data(self, filename):
+        """
+        read data from disks
+        :param filename: name of file
+        :return: file content (list)
+        """
         try:
             file_real_length = self.file_map[filename]["file_real_length"]
-            stripe_num = self.file_map[filename]["stripe_num"]
+            file_stripe_num = self.file_map[filename]["stripe_num"]
         except KeyError:
             return False
 
         file_content = []
-        for index in range(stripe_num):
-            to_read_disk_index = [(i + index) % self.num_disk for i in range(self.num_data_disk)]
-            seek_position = self.chunk_size * index
-            for x in to_read_disk_index:
-                with open("disk_{}".format(x), 'rb') as f:
-                    f.seek(seek_position, 0)
-                    content = f.read(self.chunk_size)
-                    file_content += content
+        for stripe_num in range(file_stripe_num):
+            data_disk_index, _ = self.get_disk_position(stripe_num)
+            seek_position = self.chunk_size * stripe_num
+            data = self.read_data_from_disk(data_disk_index, seek_position).reshape(
+                (1, self.num_data_disk * self.chunk_size)).tolist()
+            file_content += data[0]
 
         return file_content[:file_real_length]
 
 
     def recover(self, filename, lost_list):
-
+        """
+        recover the lost disks
+        :param filename:
+        :param lost_list:
+        :return:
+        """
         try:
             stripe_num = self.file_map[filename]["stripe_num"]
         except KeyError:
@@ -117,15 +140,26 @@ class RAID6(object):
                     f.write(to_write)
 
 
-    def lost_disk(self, lost_list):
+    def erase_disk(self, lost_list):
+        """
+        erase the disks
+        :param lost_list: disks to be erased
+        :return: None
+        """
         for i in lost_list:
             os.remove("disk_{}".format(i))
 
     def get_disk_position(self, stripe_num, lost_list=None):
+        """
+        decide the disk position
+        :param stripe_num:
+        :param lost_list:
+        :return:
+        """
         to_read_disk_index = [(i + stripe_num) % self.num_disk for i in range(self.num_disk)]
         data_disk_list = to_read_disk_index[:self.num_data_disk]
         check_disk_list = to_read_disk_index[self.num_data_disk:]
-        if lost_list:
+        if lost_list is not None:
             disk_index = []
             for i in range(self.num_disk):
                 disk_index.append(to_read_disk_index.index(i))
@@ -135,6 +169,12 @@ class RAID6(object):
         return data_disk_list, check_disk_list
 
     def read_data_from_disk(self, disk_list, seek_position):
+        """
+
+        :param disk_list:
+        :param seek_position:
+        :return:
+        """
         data = np.zeros([len(disk_list), self.chunk_size], dtype=int)
         index = 0
         for i in disk_list:
