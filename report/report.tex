@@ -180,13 +180,13 @@ In this way, we could easily get our parities $P$ by applying a matrix multiplic
 
 \subsubsection{Recovering Data}
 
-To recover our data from disk faliure, we need to define matrix $A = \left[\begin{matrix}I \\F \\\end{matrix}\right]$ and $E= \left[\begin{matrix}D \\P \\\end{matrix}\right]$, where $I$ is a $N \times N$ identity matrix and matrix $F, D, P$ are defined before. So we get the equation:
+To recover our data from disk failure, we need to define matrix $A = \left[\begin{matrix}I \\F \\\end{matrix}\right]$ and $E= \left[\begin{matrix}D \\P \\\end{matrix}\right]$, where $I$ is a $N \times N$ identity matrix and matrix $F, D, P$ are defined before. So we get the equation:
 
 \begin{equation}
 AD=E
 \end{equation}
 
-When a disk or disks encount failure, we could delete the corresponding row in $A$ and $E$. For instance, we have one failed data disk $D_i$ and one failed parity disk $P_j$, then we need to delete $i_{th}$ row in $I$ and $j_{th}$ row in $F$ to get a new $A'$. Likewise, we also need to delete $i_{th}$ row in $D$ and $j_{th}$ rwow in $P$ to get a new $E'$. Then the equation becomes: 
+When a disk or disks encounter failure, we could delete the corresponding row in $A$ and $E$. For instance, we have one failed data disk $D_i$ and one failed parity disk $P_j$, then we need to delete $i_{th}$ row in $I$ and $j_{th}$ row in $F$ to get a new $A'$. Likewise, we also need to delete $i_{th}$ row in $D$ and $j_{th}$ row in $P$ to get a new $E'$. Then the equation becomes: 
 
 \begin{equation}
 A'D=E'
