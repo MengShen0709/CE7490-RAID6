@@ -7,10 +7,8 @@ class RAID6(object):
         self.num_check_disk = num_check_disk
         self.num_data_disk = num_data_disk
         self.num_disk = self.num_check_disk + self.num_data_disk
-        self.block_size = 4
         self.chunk_size = chunk_size
         self.stripe_size = self.num_data_disk * self.chunk_size
-        assert self.chunk_size % self.block_size == 0
         self.GF = GaloisField(num_data_disk=self.num_data_disk, num_check_disk=self.num_check_disk)
         self.file_map = {}
         for i in range(self.num_disk):
@@ -88,7 +86,7 @@ class RAID6(object):
                 = self.get_disk_position(index, lost_list)
             D = self.read_data_from_disk(data_disk_list, seek_position)
             C = self.read_data_from_disk(check_disk_list, seek_position)
-            if data_disk_list:
+            if len(data_disk_list) < self.num_data_disk:
                 E = np.concatenate((D, C), axis=0)
                 A = np.concatenate((np.eye(self.num_data_disk, dtype=int), self.GF.F), axis=0)
                 to_remove = [disk_index[i] for i in lost_list]
@@ -105,6 +103,7 @@ class RAID6(object):
                             (1,self.num_disk - len(lost_list))), E)
             else:
                 D_ = D
+
 
             C_ = self.GF.matmul(self.GF.F, D_)
 

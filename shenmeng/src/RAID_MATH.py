@@ -32,7 +32,7 @@ class GaloisField(object):
         c = self.j_to_xj[cj]
         return c
 
-    def devide(self, a, b):
+    def divide(self, a, b):
         """
         c = a / b
           = x^aj / x^bj
@@ -127,18 +127,19 @@ class GaloisField(object):
             A_ = A
         A_ = np.concatenate((A_, np.eye(A_.shape[0], dtype=int)), axis=1)
         dim = A_.shape[0]
+
         for i in range(dim):
-            if not A_[i, i]:
+            if A_[i, i] == 0:
                 for k in range(i + 1, dim):
                     if A_[k, i]:
                         break
                 tmp = A_[k, :].copy()
                 A_[k, :] = A_[i,:]
                 A_[i, :] = tmp
-                # A_[i, :] = list(map(self.add, A_[i, :], A_[k, :]))
-            A_[i, :] = list(map(self.devide, A_[i, :], [A_[i, i]] * len(A_[i, :])))
+
+            A_[i, :] = list(map(self.divide, A_[i, :], [A_[i, i]] * len(A_[i, :])))
             for j in range(i+1, dim):
-                A_[j, :] = self.add(A_[j,:], list(map(self.multiply, A_[i, :], [self.devide(A_[j, i], A_[i, i])] * len(A_[i, :]))))
+                A_[j, :] = self.add(A_[j,:], list(map(self.multiply, A_[i, :], [self.divide(A_[j, i], A_[i, i])] * len(A_[i, :]))))
         for i in reversed(range(dim)):
             for j in range(i):
                 A_[j, :] = self.add(A_[j, :], list(map(self.multiply, A_[i, :], [A_[j,i]] * len(A_[i,:]))))
@@ -146,4 +147,10 @@ class GaloisField(object):
         if A.shape[0] != A.shape[1]:
             A_inverse = self.matmul(A_inverse, A_T)
         return A_inverse
+
+
+
+
+
+
 
