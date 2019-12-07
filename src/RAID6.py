@@ -12,7 +12,11 @@ class RAID6(object):
                               num_check_disk= self.config.num_check_disk)
 
         self.data_disk_list  = list(range(self.config.num_data_disk))
-        self.check_disk_list = list(range(self.config.num_check_disk))
+        self.check_disk_list = list(range(self.config.num_data_disk, \
+                                          self.config.num_data_disk+self.config.num_check_disk))
+
+        print("controller activated, ready to store data\n")
+        input("Press Enter to continue ...\n")
     
     def read_data(self, filename, mode = 'rb'):
         with open(filename, mode) as f:
@@ -24,6 +28,7 @@ class RAID6(object):
         :return: data array
         '''
         content = self.read_data(filename)
+        self.content_length = len(content)
         file_size = len(content)
         total_stripe = file_size // self.config.stripe_size + 1
         total_stripe_size = total_stripe * self.config.stripe_size
@@ -55,23 +60,31 @@ class RAID6(object):
             with open(os.path.join(dir, 'disk_{}'.format(i)), 'wb') as f:
                 to_write = bytes(data_with_parity[i,:].tolist())
                 f.write(to_write)
-        print("write data and parity to disk successfully")
+        print("write data and parity to disk successfully\n")
     
     def read_from_disk(self, dir):
         '''read data from each disk
         :param dir:
-        :return: None
+        :return: recovered content
         '''
-        content = ''
+        content = []
         for i in range(self.config.num_data_disk):
-            with open(os.path.join(dir, "disk_{}".format(i))) as f:
-                content += f.read()
+            with open(os.path.join(dir, "disk_{}".format(i)), 'rb') as f:
+                content += list(f.read())
+        # cut empty content          
+        content = content[:self.content_length]
         
-        print("rebuild data: "+str(content))
+        return content
        
-    def check_failure(self):
-        
-        pass
+    def erase_disk(self, dir, erase_list):
+        """
+        erase the disks
+        :param corrupted_disk_list: disks to be erased
+        :return: None
+        """
+        for i in erase_list:
+            os.remove(os.path.join(dir,"disk_{}".format(i)))
+            print("\ndisk_{} is erased".format(i))
 
     def rebuild_data(self, dir, corrupted_disk_list):
         '''rebuild data from corrupted disk
@@ -79,6 +92,9 @@ class RAID6(object):
         :param corrupted_disk_list: corrupted disk
         :return: None
         '''
+        
+        input("\nPress Enter to rebuild lost data ...\n")
+
         if len(corrupted_disk_list) > self.config.num_check_disk:
             print("failed to rebuild data")
             return -1
@@ -91,7 +107,7 @@ class RAID6(object):
         for i in left_data_disk:
             left_data.append(self.read_data(os.path.join(dir,'disk_{}'.format(i))))
         for j in left_check_disk:
-            left_parity.append(self.read_data(os.path.join(dir,'disk_{}'.format(j+self.config.num_data_disk))))
+            left_parity.append(self.read_data(os.path.join(dir,'disk_{}'.format(j))))
 
         A = np.concatenate([np.eye(self.config.num_data_disk, dtype=int), self.gf.vander], axis=0)
         A_= np.delete(A, obj=corrupted_disk_list, axis=0)
@@ -108,4 +124,4 @@ class RAID6(object):
                 to_write = bytes(E[i,:].tolist())
                 f.write(to_write)
         
-        print("rebuild data successfully")
+        print("rebuild data successfully\n")

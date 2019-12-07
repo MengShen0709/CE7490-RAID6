@@ -10,14 +10,14 @@ CE7490 2019 Fall - Advanced Topics in Distributed System - Project 2: RAID-6 bas
 </p>
 
 ## Installation Guide
-The RAID-6 system is devloped in Python 3.7 environment with corresponding dependencies.
+The RAID-6 system is devloped in Python 3.8 environment with corresponding dependencies.
 
 The project is supported on Linux and MacOS. It may be possible to install on Windows, though this hasn't been extensively tested.
 
 ### Installing Anaconda
-[Anaconda](https://www.anaconda.com/distribution/) is a library that includes Python and many useful packages, as well as an environment manager called conda that makes package management simple.
+Anaconda is a library that includes Python and many useful packages, as well as an environment manager called conda that makes package management simple.
 
-Follow the official instrutions of Anaconda. Once it has been successfully installed, run the following command at terminal:
+Follow the [official instrutions](https://www.anaconda.com/distribution/) of Anaconda to install. Once it has been successfully installed, run the following command at terminal:
 
 ```
 git clone https://github.com/GuluDeemo/CE7490-RAID6.git
@@ -28,7 +28,7 @@ conda env create -f environment.yml
 To use Python from the environment you just created, activate the environment with
 
 ```
-conda activate CE7490-RAID6
+conda activate RAID6
 ```
 
 ## Running Experiments
@@ -38,6 +38,8 @@ The standard way to run the test from terminal is:
 ```
 python test.py 
 ```
+
+The original file is stored in ```./data/file```. We have provided three kinds of file (.txt, .pdf, .jpg) for recovering test. Feel free to add your preferred file type and define your RAID6 configuration at ```./src/config.py ```.
 
 ## Reference
 An excellent tutorial of implementing RAID6 using Reed-Solomon coding can be found at http://www.cs.utk.edu/~plank/plank/papers/CS-96-332.html

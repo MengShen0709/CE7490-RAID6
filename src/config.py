@@ -22,10 +22,11 @@ class Config(object):
         
         assert self.chunk_size % self.block_size == 0
 
-        print("Num of Disk: %d" % self.num_disk)
+        print("\nNum of Disk: %d" % self.num_disk)
         print("Num of Data Disk: %d" % self.num_data_disk)
         print("Num of Checksum: %d" % self.num_check_disk)
-        
+        print("\nRAID-6 configuration initialized\n")
+        input("Press Enter to continue ...\n")
     
     def mkdisk(self):
         '''
